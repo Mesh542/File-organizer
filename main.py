@@ -14,6 +14,10 @@ def group_files_by_type(files: list[str]):
         else:
             sorted_files[file_name].append(file)
 
+def generate_statistics(df: pd.DataFrame) -> pd.DataFrame:
+    return df.describe().transpose()
+
+
 def main():
     for root, dir, files in os.walk(PATH):
         group_files_by_type(files)
@@ -24,7 +28,12 @@ def main():
     # Pad shorter arrays with NaN
     padded_data = {key: arr + [np.nan] * (max_length - len(arr)) for key, arr in sorted_files.items()}
     df = pd.DataFrame(padded_data)
-    df.to_excel(f'{PATH}/downloads_files_data.xlsx')
+    df.to_excel(f'{PATH}/downloads_files_data.xlsx', sheet_name='Data')
+    complete_path = PATH + '/downloads_files_data.xlsx'
+    with pd.ExcelWriter(complete_path, mode='a', engine='openpyxl', if_sheet_exists='overlay') as writer:
+        new_df = generate_statistics(df)
+        new_df.to_excel(writer, sheet_name='Statistics', index=True,
+                        header=True)
     print('Exported.')
 
 if __name__=='__main__':
